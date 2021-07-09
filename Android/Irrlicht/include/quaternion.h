@@ -55,9 +55,6 @@ class quaternion
 		//! inequality operator
 		bool operator!=(const quaternion& other) const;
 
-		//! Assignment operator
-		inline quaternion& operator=(const quaternion& other);
-
 #ifndef IRR_TEST_BROKEN_QUATERNION_USE
 		//! Matrix assignment operator
 		inline quaternion& operator=(const matrix4& other);
@@ -140,13 +137,26 @@ class quaternion
 		quaternion& makeInverse();
 
 		//! Set this quaternion to the linear interpolation between two quaternions
-		/** \param q1 First quaternion to be interpolated.
+		/** NOTE: lerp result is *not* a normalized quaternion. In most cases
+		you will want to use lerpN instead as most other quaternion functions expect
+		to work with a normalized quaternion.
+		\param q1 First quaternion to be interpolated.
 		\param q2 Second quaternion to be interpolated.
 		\param time Progress of interpolation. For time=0 the result is
 		q1, for time=1 the result is q2. Otherwise interpolation
-		between q1 and q2.
+		between q1 and q2. Result is not normalized.
 		*/
 		quaternion& lerp(quaternion q1, quaternion q2, f32 time);
+
+		//! Set this quaternion to the linear interpolation between two quaternions and normalize the result
+		/**
+		\param q1 First quaternion to be interpolated.
+		\param q2 Second quaternion to be interpolated.
+		\param time Progress of interpolation. For time=0 the result is
+		q1, for time=1 the result is q2. Otherwise interpolation
+		between q1 and q2. Result is normalized.
+		*/
+		quaternion& lerpN(quaternion q1, quaternion q2, f32 time);
 
 		//! Set this quaternion to the result of the spherical interpolation between two quaternions
 		/** \param q1 First quaternion to be interpolated.
@@ -163,7 +173,7 @@ class quaternion
 		quaternion& slerp(quaternion q1, quaternion q2,
 				f32 time, f32 threshold=.05f);
 
-		//! Create quaternion from rotation angle and rotation axis.
+		//! Set this quaternion to represent a rotation from angle and axis.
 		/** Axis must be unit length.
 		The quaternion representing the rotation is
 		q = cos(A/2)+sin(A/2)*(x*i+y*j+z*k).
@@ -225,16 +235,6 @@ inline bool quaternion::operator==(const quaternion& other) const
 inline bool quaternion::operator!=(const quaternion& other) const
 {
 	return !(*this == other);
-}
-
-// assignment operator
-inline quaternion& quaternion::operator=(const quaternion& other)
-{
-	X = other.X;
-	Y = other.Y;
-	Z = other.Z;
-	W = other.W;
-	return *this;
 }
 
 #ifndef IRR_TEST_BROKEN_QUATERNION_USE
@@ -354,7 +354,7 @@ inline matrix4 quaternion::getMatrix() const
 //! Faster method to create a rotation matrix, you should normalize the quaternion before!
 inline void quaternion::getMatrixFast( matrix4 &dest) const
 {
-	// TODO: 
+	// TODO:
 	// gpu quaternion skinning => fast Bones transform chain O_O YEAH!
 	// http://www.mrelusive.com/publications/papers/SIMD-From-Quaternion-to-Matrix-and-Back.pdf
 	dest[0] = 1.0f - 2.0f*Y*Y - 2.0f*Z*Z;
@@ -572,16 +572,22 @@ inline quaternion& quaternion::normalize()
 {
 	// removed conditional branch since it may slow down and anyway the condition was
 	// false even after normalization in some cases.
-	return (*this *= reciprocal_squareroot ( X*X + Y*Y + Z*Z + W*W ));
+	return (*this *= (f32)reciprocal_squareroot ( (f64)(X*X + Y*Y + Z*Z + W*W) ));
 }
 
-// set this quaternion to the result of the linear interpolation between two quaternions
+// Set this quaternion to the result of the linear interpolation between two quaternions
 inline quaternion& quaternion::lerp( quaternion q1, quaternion q2, f32 time)
 {
 	const f32 scale = 1.0f - time;
 	return (*this = (q1*scale) + (q2*time));
 }
 
+// Set this quaternion to the result of the linear interpolation between two quaternions and normalize the result
+inline quaternion& quaternion::lerpN( quaternion q1, quaternion q2, f32 time)
+{
+	const f32 scale = 1.0f - time;
+	return (*this = ((q1*scale) + (q2*time)).normalize() );
+}
 
 // set this quaternion to the result of the interpolation between two quaternions
 inline quaternion& quaternion::slerp( quaternion q1, quaternion q2, f32 time, f32 threshold)
@@ -604,7 +610,7 @@ inline quaternion& quaternion::slerp( quaternion q1, quaternion q2, f32 time, f3
 		return (*this = (q1*scale) + (q2*invscale));
 	}
 	else // linear interpolation
-		return lerp(q1,q2,time);
+		return lerpN(q1,q2,time);
 }
 
 
@@ -692,7 +698,7 @@ inline vector3df quaternion::operator* (const vector3df& v) const
 	// nVidia SDK implementation
 
 	vector3df uv, uuv;
-	vector3df qvec(X, Y, Z);
+	const vector3df qvec(X, Y, Z);
 	uv = qvec.crossProduct(v);
 	uuv = qvec.crossProduct(uv);
 	uv *= (2.0f * W);

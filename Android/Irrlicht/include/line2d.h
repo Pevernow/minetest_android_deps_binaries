@@ -24,8 +24,6 @@ class line2d
 		line2d(T xa, T ya, T xb, T yb) : start(xa, ya), end(xb, yb) {}
 		//! Constructor for line between the two points given as vectors.
 		line2d(const vector2d<T>& start, const vector2d<T>& end) : start(start), end(end) {}
-		//! Copy constructor.
-		line2d(const line2d<T>& other) : start(other.start), end(other.end) {}
 
 		// operators
 
@@ -329,13 +327,13 @@ class line2d
 	template <>
 	inline vector2df line2d<irr::f32>::getClosestPoint(const vector2df& point, bool checkOnlySegments) const
 	{
-		vector2df c = point - start;
+		const vector2df c = point - start;
 		vector2df v = end - start;
-		f32 d = (f32)v.getLength();
+		const f32 d = (f32)v.getLength();
 		if ( d == 0 ) // can't tell much when the line is just a single point
 			return start;
 		v /= d;
-		f32 t = v.dotProduct(c);
+		const f32 t = v.dotProduct(c);
 
 		if ( checkOnlySegments )
 		{

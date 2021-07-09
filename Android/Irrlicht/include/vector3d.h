@@ -28,14 +28,10 @@ namespace core
 		vector3d(T nx, T ny, T nz) : X(nx), Y(ny), Z(nz) {}
 		//! Constructor with the same value for all elements
 		explicit vector3d(T n) : X(n), Y(n), Z(n) {}
-		//! Copy constructor
-		vector3d(const vector3d<T>& other) : X(other.X), Y(other.Y), Z(other.Z) {}
 
 		// operators
 
 		vector3d<T> operator-() const { return vector3d<T>(-X, -Y, -Z); }
-
-		vector3d<T>& operator=(const vector3d<T>& other) { X = other.X; Y = other.Y; Z = other.Z; return *this; }
 
 		vector3d<T> operator+(const vector3d<T>& other) const { return vector3d<T>(X + other.X, Y + other.Y, Z + other.Z); }
 		vector3d<T>& operator+=(const vector3d<T>& other) { X+=other.X; Y+=other.Y; Z+=other.Z; return *this; }
@@ -56,6 +52,20 @@ namespace core
 		vector3d<T>& operator/=(const vector3d<T>& other) { X/=other.X; Y/=other.Y; Z/=other.Z; return *this; }
 		vector3d<T> operator/(const T v) const { T i=(T)1.0/v; return vector3d<T>(X * i, Y * i, Z * i); }
 		vector3d<T>& operator/=(const T v) { T i=(T)1.0/v; X*=i; Y*=i; Z*=i; return *this; }
+
+		T& operator [](u32 index)
+		{
+			_IRR_DEBUG_BREAK_IF(index>2) // access violation
+
+			return *(&X+index);
+		}
+
+		const T& operator [](u32 index) const
+		{
+			_IRR_DEBUG_BREAK_IF(index>2) // access violation
+
+			return *(&X+index);
+		}
 
 		//! sort in order X, Y, Z. Equality with rounding tolerance.
 		bool operator<=(const vector3d<T>&other) const

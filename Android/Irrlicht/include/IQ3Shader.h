@@ -639,13 +639,6 @@ namespace quake3
 			: ID ( 0 ), VarGroup ( 0 )  {}
 		virtual ~IShader () {}
 
-		void operator = (const IShader &other )
-		{
-			ID = other.ID;
-			VarGroup = other.VarGroup;
-			name = other.name;
-		}
-
 		bool operator == (const IShader &other ) const
 		{
 			return 0 == strcmp ( name.c_str(), other.name.c_str () );
@@ -693,13 +686,11 @@ namespace quake3
 	inline void dumpVarGroup ( core::stringc &dest, const SVarGroup * group, s32 stack )
 	{
 		core::stringc buf;
-		s32 i;
-
 
 		if ( stack > 0 )
 		{
 			buf = "";
-			for ( i = 0; i < stack - 1; ++i )
+			for (s32 i = 0; i < stack - 1; ++i )
 				buf += '\t';
 
 			buf += "{\n";
@@ -709,7 +700,7 @@ namespace quake3
 		for ( u32 g = 0; g != group->Variable.size(); ++g )
 		{
 			buf = "";
-			for ( i = 0; i < stack; ++i )
+			for (s32 i = 0; i < stack; ++i )
 				buf += '\t';
 
 			buf += group->Variable[g].name;
@@ -722,13 +713,12 @@ namespace quake3
 		if ( stack > 1 )
 		{
 			buf = "";
-			for ( i = 0; i < stack - 1; ++i )
+			for (s32 i = 0; i < stack - 1; ++i )
 				buf += '\t';
 
 			buf += "}\n";
 			dest.append ( buf );
 		}
-
 	}
 
 	/*!
@@ -739,12 +729,10 @@ namespace quake3
 		if ( 0 == shader )
 			return dest;
 
-		const SVarGroup * group;
-
 		const u32 size = shader->VarGroup->VariableGroup.size ();
 		for ( u32 i = 0; i != size; ++i )
 		{
-			group = &shader->VarGroup->VariableGroup[ i ];
+			const SVarGroup * group = &shader->VarGroup->VariableGroup[ i ];
 			dumpVarGroup ( dest, group, core::clamp( (int)i, 0, 2 ) );
 		}
 
@@ -767,7 +755,7 @@ namespace quake3
 	*/
 	inline void getTextures(tTexArray &textures,
 				const core::stringc &name, u32 &startPos,
-				io::IFileSystem *fileSystem,
+				const io::IFileSystem *fileSystem,
 				video::IVideoDriver* driver)
 	{
 		static const char * const extension[] =
